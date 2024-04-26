@@ -1,0 +1,166 @@
+#include "dkli.dkh"
+#!
+module "Almacenes autorizados para proporcionar insumos a empleados :almacen"
+{
+    @table_name = "rhgfcdi_almacen"
+    @keyfield = "sys_pk"
+    @sys_fields = "sys_pk,sys_guid,sys_dtcreated,sys_timestamp,sys_info,sys_user,sys_lastuser,sys_exported,sys_dtexported,sys_recver,sys_deleted,sys_lock"
+
+    @create_fields = @sys_fields + ",ref_almacen,ref_unidad,subunidades,notas"
+    @update_fields = @sys_fields + ",ref_almacen,ref_unidad,subunidades,notas"
+    
+    @create_exclude_fields = "sys_lastuser"
+    @update_exclude_fields = "sys_pk,sys_guid,sys_dtcreated,sys_user"
+    
+    @create_alias_fields = ""
+    @update_alias_fields = ""
+
+    @list_query = "
+    SELECT
+        t1.sys_pk,
+        t1.sys_guid,
+        alm.descripcion AS dalmacen,
+        uni.descripcion AS dunidad,
+        IF(t1.subunidades, 'Si', 'No') AS dsubunidades,
+        IFNULL(t1.notas,'') AS notas
+    FROM #<@table_name> AS t1
+        INNER JOIN almacen AS alm ON t1.ref_almacen = alm.sys_pk
+        INNER JOIN rh_unidad_org AS uni ON t1.ref_unidad = uni.sys_pk
+    WHERE NOT IFNULL(t1.sys_deleted,0)
+        #<conditions>
+    LIMIT #<@default_max_rows>
+    "
+
+    @read_query = "
+    SELECT
+        t1.sys_pk,
+        t1.sys_guid,
+        t1.sys_recver,
+        t1.ref_almacen,
+        t1.ref_unidad,
+        alm.codigo AS calmacen,
+        alm.descripcion AS dalmacen,
+        uni.codigo AS cunidad,
+        uni.descripcion AS dunidad,
+        IFNULL(t1.subunidades,0) AS subunidades,
+        IFNULL(t1.notas,'') AS notas
+    FROM #<@table_name> AS t1
+        INNER JOIN almacen AS alm ON t1.ref_almacen = alm.sys_pk
+        INNER JOIN rh_unidad_org AS uni ON t1.ref_unidad = uni.sys_pk
+    WHERE t1.#<@keyfield> = @_entity_id
+    "
+
+    prepareView::&db,&params,&data
+    {
+        _entity_id = @@(params,"$_entity_id")
+        _operation = @@(params,"$_operation")
+        
+        isNew = (_entity_id == "_new")
+
+        sql_list_almacenes = "SELECT sys_pk AS ialmacen, CONCAT('[',codigo,']',' ',descripcion) AS dalmacen FROM almacen WHERE NOT IFNULL(sys_deleted,0)"
+        sql_list_unidades = "SELECT sys_pk AS iunidad, CONCAT('[',codigo,']',' ',descripcion) AS dunidad FROM rh_unidad_org WHERE NOT IFNULL(sys_deleted,0)"
+
+        data<"list_almacenes*"> : dbr.list(db,sql_list_almacenes,@null)
+        data<"list_unidades*"> : dbr.list(db,sql_list_unidades,@null)
+    }
+
+    evaluateFilters::&params
+    {
+        conditions = ""
+
+        if trim(@@(params,"$fil_text")) != "" {
+            conditions = conditions + "AND (alm.descripcion LIKE CONCAT('%',@fil_text,'%') OR uni.descripcion LIKE CONCAT('%',@fil_text,'%'))"
+        }
+
+        @list_query = ftext(@list_query)
+    }
+
+    list::&db,&params
+    {
+        do almacen.evaluateFilters(params)
+
+        new data
+        {
+            @"almacenes*": entity.list(db,params)
+            @"itemactions*": dbr.apps.itemactions(db,"DET072","action","",0)
+            @"itemreports*": dbr.apps.itemactions(db,"DET072","report","",0)
+        }
+
+        return data
+    }
+
+    read::&db,&params
+    {
+        new data
+        {
+            @"entity*": entity.read(db,params)
+        }
+        do almacen.prepareView(db,params,data)
+
+        return data
+    }
+
+    blank::&db,&params
+    {
+        new data {}
+        do almacen.prepareView(db,params,data)
+
+        return data
+    }
+
+    create::&db,&params,&data
+    {
+        namespace "almacen"
+
+        using data
+        {
+            @"subunidades": parse.bool(trim(@@(data,"$subunidades")))
+        }
+
+        do entity.create(db,params,data)
+
+        exception
+        {
+            do errordet(@false)
+            if dbr.in_transaction(db) { do dbr.rollback(db) }
+
+            ref FormData = record.copy(data,"*")
+            code = last_error_code()
+            error = last_error()
+
+            do record.clear(data)
+            data<"form*"> : FormData
+
+            do prepareView(db,params,data)
+            do rise_error(code,error)
+        }
+    }
+
+    update::&db,&params,&data
+    {
+        namespace "almacen"
+
+        using data
+        {
+            @"subunidades": parse.bool(trim(@@(data,"$subunidades")))
+        }
+
+        do entity.update(db,params,data)
+
+        exception
+        {
+            do errordet(@false)
+            if dbr.in_transaction(db) { do dbr.rollback(db) }
+
+            ref FormData = record.copy(data,"*")
+            code = last_error_code()
+            error = last_error()
+
+            do record.clear(data)
+            data<"form*"> : FormData
+
+            do prepareView(db,params,data)
+            do rise_error(code,error)
+        }
+    }
+}

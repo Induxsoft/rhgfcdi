@@ -1,0 +1,5 @@
+"id","title","shorttitle","icon16x16","href","_blank","appid","itemtype","req_context_item_id","act_type"
+
+"HC11","Agregar almacen autorizado","Agregar","","/!/rhgfcdi/almacenes/_new/","0","rhgfcdi.almacenes","DET072","0","action"
+"HC12","Editar almacen autorizado","Editar","","/!/rhgfcdi/almacenes/@_src_context_item_id/","0","rhgfcdi.almacenes","DET072","1","action"
+"HC13","Eliminar almacen autorizado","Eliminar","","javascript:InduxsoftCrudlModel.Delete(@_src_context_item_id)","0","rhgfcdi.almacenes","DET072","1","action"

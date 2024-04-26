@@ -1,0 +1,17 @@
+#include "dkli.dkh"
+#!
+module "AlmacenController"
+{
+    switch @@(@http_context,"$request/get/_view")
+    {
+        default
+        {
+            point @list to almacen.list
+            point @read to almacen.read
+            point @blank to almacen.blank
+            point @create to almacen.create
+            point @update to almacen.update
+            break
+        }
+    }
+}

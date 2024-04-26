@@ -1,0 +1,139 @@
+#include "ddm.dkh"
+model "rhgfcdi"
+{
+    /**
+    * Dotación de Insumos al Personal
+    * =======================================================================
+    */
+    #include "induxsoft.abstracts.ddm"
+
+    //* ======================================== [ DEPENDENCIAS (FK) ]
+    //#region Domicilio
+    entity "pais" : "TableModel"
+    {
+        @"codigo" string(8) unique required
+        @"codigotel" string(5)
+        @"nombre" string(100) unique required
+    }
+    entity "edoprov" : "TableModel"
+    {
+        @"codigo" string(8) unique required
+        @"nombre" string(50) required
+        @"ipais" ref:"pais" required
+    }
+    entity "ciudad" : "TableModel"
+    {
+        @"codigo" string(8) unique required
+        @"codigotel" string(5)
+        @"nombre" string(100) required
+        @"estado" ref:"edoprov" required
+    }
+    entity "domicilio" : "TableModel"
+    {
+        @"codpos" string(10)
+        @"colonia" string(150)
+        @"direccion" string(1024)
+        @"notas" string(150)
+        @"telefonos" string(150)
+        @"iciudad" ref:"ciudad"
+        @"numint" string(1024)
+        @"numext" string(1024)
+    }
+    //#endregion
+    // Catálogo de almacenes
+    entity "almacen" : "TableModel"
+    {
+        @"codcuenta" string(50) unique
+        @"codigo" string(10) unique required
+        @"descripcion" string(50) unique required
+        @"email" string(50)
+        @"fax" string(150)
+        @"telefonos" string(150)
+        @"website" string(150)
+        @"domicilio1" ref:"domicilio"
+        @"uf_movremoto" bool
+        @"uf_inhabilitado" bool
+        @"uf_fechainhabilitacion" datetime
+        @"uf_formaproduccion" int
+    }
+    // Unidad organizacional
+	entity "rh_unidad_org" : "TableModel"
+	{
+		@"codigo" string(32) unique required
+		@"descripcion" string(150) required
+		@"superior" ref:"rh_unidad_org"
+		@"notas" string(4096)
+		@"link" string(1024)
+	}
+
+    //* ======================================== [ ENTIDADES PRINCIPALES ]
+    // Almacenes autorizados para proporcionar insumos a empleados
+    entity "rhgfcdi_almacen":"TableModel"
+    {
+        @"ref_almacen" ref:"almacen" required
+        @"ref_unidad"  ref:"rh_unidad_org" required
+        @"subunidades" bool // Indica si puede usarse en sub-unidades organizacionales
+        @"notas" memo // Notas generales
+        
+        index "almacen_unidad" unique
+        {
+            field "ref_almacen"
+            field "ref_unidad"
+        }
+    }
+
+    //* ======================================== [ ... ]
+    // Permisos disponibles
+    entity "sitem" : "TableModel"
+    {
+        @"description" string(250)
+        @"itemid" string(32) unique required
+        @"itemparent" ref:"sitem"
+    }
+    // Información de la aplicación
+    entity "sys_app_catalog"
+    {
+        @"pack_id" string(32) required
+        @"app_id" string(32) key
+        @"app_title" string(255)
+        @"created" datetime required
+        @"app_info" mmemo
+    }
+    // Categoria de la aplicación
+    entity "sys_app_category"
+    {
+        @"id" string(32) key
+        @"title" string(255) required
+    }
+    // Recursos de la aplicación
+    entity "sys_app_shortcut" 
+    {
+        @"id" string(32) key
+        @"title" string(255) required
+        @"icon96x96" string(1024) required
+        @"src" string(1024) required
+        @"_blank" bool
+        @"appid" ref:"sys_app_catalog"
+        @"cat" ref:"sys_app_category"
+    }
+    // Tipos de elementos de la aplicación
+    entity "sys_app_item_type"
+    {
+        @"id" string(32) key
+        @"title" string(255) required
+    }
+    // Acciones Generales o Especificas de elementos de la aplicación
+    entity "sys_app_item_action"
+    {
+        @"id" string(32) key
+        @"title" string(255) required
+        @"shorttitle" string(25) 
+        @"icon16x16" string(1024) required
+        @"href" string(1024) required
+        @"_blank" bool
+        @"appid" ref : "sys_app_catalog"
+        @"itemtype" ref : "sys_app_item_type"
+        @"req_context_item_id" bool
+        @"act_type" string(15) //Cadena con el tipo de acción: 'action' o 'report'
+    }
+}

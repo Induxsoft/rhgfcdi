@@ -1,0 +1,117 @@
+#include "dkli.dkh"
+#!
+module "form.dk"
+{
+    #include "functions.dkh"
+    #include "serialize.dkh"
+    #include "uielements.v12.dkl"
+    #include "../_lib/config.dk"
+    #include "../_lib/lib.dk"
+	#include "../_lib/icons.dk"
+
+    do @context.begin(@crud_context)
+
+    ref @_GET = ifnull(@("&parameters"),record.create())
+    ref entity = ifnull(@("&./entity"),record.create())
+    ref list_almacenes = ifnull(@("&./list_almacenes"),list.create())
+    ref list_unidades = ifnull(@("&./list_unidades"),list.create())
+
+	@_entities_type = @("$parameters/_entities_type")
+	@_entity_id = @("$parameters/_entity_id")
+
+	isNew = (@_entity_id == "_new")
+
+    new sel_almacen
+    {
+        @"datatable*": list_almacenes
+        @"id": "sel_almacen"
+        new member "attributes"
+        {
+            @"class": "form-select rounded-0"
+            @"name": "ref_almacen"
+            @"required": ""
+        }
+        @"value_field": "ialmacen"
+        @"text_field": "dalmacen"
+        @"selected": lib.form("ref_almacen","nm",entity)
+    }
+
+    new sel_unidad
+    {
+        @"datatable*": list_unidades
+        @"id": "sel_unidad"
+        new member "attributes"
+        {
+            @"class": "form-select rounded-0"
+            @"name": "ref_unidad"
+            @"required": ""
+        }
+        @"value_field": "iunidad"
+        @"text_field": "dunidad"
+        @"selected": lib.form("ref_unidad","nm",entity)
+    }
+
+    header_act::
+    { 
+        #$ button(type="submit" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print"){$"#<@ICON_SAVE>"}
+    }
+    #! point general_act to header_act
+
+    new nav_config
+    {
+        @"title": ftext("#<ifstr(isNew,'Agregar','Editar') + ' ' +@_entities_type>")
+        @"buttons*": general_act
+        @"urlexit": "../"
+        member @"hidden" { @"print": @true }
+    }
+
+    #$ div(class="container")
+    {
+        form(method="POST" action="./" id="form-almacen")
+        {
+            #! do uie.printV12FormBar(nav_config)
+
+            #$ div(id="work_area" class="container-section")
+            {
+                div(class="#<ifstr(@('error/message')!='','alert alert-danger','')> overflow-auto"){$"#<@('error/message')>"}
+
+                input(type="hidden" name="sys_pk" value="#<@@(entity, '#sys_pk')>")
+                input(type="hidden" name="sys_recver" value="#<@@(entity, '#sys_recver')>")
+
+                div(class="row")
+                {
+                    div(class="col-lg-6 col-md-6 col-sm-6")
+                    {
+                        label(class="form-label fw-bold" "for"="sel_almacen"){$"Almacen:"}
+                        ##
+                        do uie.dbSelect(sel_almacen)
+                        ##
+                    }
+                    div(class="col-lg-6 col-md-6 col-sm-6")
+                    {
+                        label(class="form-label fw-bold" "for"="sel_unidad"){$"Unidad:"}
+                        ##
+                        do uie.dbSelect(sel_unidad)
+                        ##
+                    }
+
+                    div(class="col-12")
+                    {
+                        label(class="form-label" "for"="txt_notas"){$"Notas:"}
+				        textarea(class="form-control rounded-0" name="notas" id="txt_notas" rows="5"){$"#<lib.form('notas','tx',entity)>"}
+
+                        div(class="form-check")
+                        {
+                            #!
+                            checked = "checked"
+                            if not(isNew) { checked = lib.form("subunidades","ch",entity) }
+                            #$
+                            input(class="form-check-input" type="checkbox" name="subunidades" id="chk_subunidades" "#<checked>"="")
+                            label(class="form-check-label" "for"="chk_subunidades"){$"Puede usarse en sub-unidades organizacionales"}
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
