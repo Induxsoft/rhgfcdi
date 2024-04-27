@@ -13,8 +13,14 @@ module
 	@default_max_rows = 250 // limite de registros para las vistas de lista
 
 	//* ======================================== [ _STATIC RESOURCES ]
+	@JS_DOTACION = "/$/rhgfcdi/js/dotacion.js"
 
 	//* ======================================== [ _PACKAGE ]
+	@URL_BUSCAR_INSUMO = "/!/rhgfcdi/limites/?_view=buscar-insumo&search=@search"
+	@URL_BUSCAR_PUESTO = "/!/rhgfcdi/limites/?_view=buscar-puesto&search=@search"
+	@URL_BUSCAR_EMPLEADO = "/!/rhgfcdi/dotacion/?_view=buscar-empleado&search=@search"
+	@URL_OBTENER_ALMACENES = "/!/rhgfcdi/dotacion/?_view=obtener-almacenes&iempleado=@iempleado"
+
 	@CDI_ALMACENES = "/!/rhgfcdi/almacenes/"
 	@CDI_LIMITES = "/!/rhgfcdi/limites/"
 	@CDI_DOTACION = "/!/rhgfcdi/dotacion/"

@@ -1,9 +1,13 @@
 "id","title","shorttitle","icon16x16","href","_blank","appid","itemtype","req_context_item_id","act_type"
 
-"HC11","Agregar almacen autorizado","Agregar","","/!/rhgfcdi/almacenes/_new/","0","rhgfcdi.almacenes","DET072","0","action"
-"HC12","Editar almacen autorizado","Editar","","/!/rhgfcdi/almacenes/@_src_context_item_id/","0","rhgfcdi.almacenes","DET072","1","action"
-"HC13","Eliminar almacen autorizado","Eliminar","","javascript:InduxsoftCrudlModel.Delete(@_src_context_item_id)","0","rhgfcdi.almacenes","DET072","1","action"
+"HC11","Agregar almacen autorizado para insumos","Agregar","","/!/rhgfcdi/almacenes/_new/","0","rhgfcdi.almacenes","DET072","0","action"
+"HC12","Editar almacen autorizado para insumos","Editar","","/!/rhgfcdi/almacenes/@_src_context_item_id/","0","rhgfcdi.almacenes","DET072","1","action"
+"HC13","Eliminar almacen autorizado insumos","Eliminar","","javascript:InduxsoftCrudlModel.Delete(@_src_context_item_id)","0","rhgfcdi.almacenes","DET072","1","action"
 
 "HC21","Agregar limite de dotación de insumos","Agregar","","/!/rhgfcdi/limites/_new/","0","rhgfcdi.limites","DET073","0","action"
 "HC22","Editar limite de dotación de insumos","Editar","","/!/rhgfcdi/limites/@_src_context_item_id/","0","rhgfcdi.limites","DET073","1","action"
 "HC23","Eliminar limite de dotación de insumos","Eliminar","","javascript:InduxsoftCrudlModel.Delete(@_src_context_item_id)","0","rhgfcdi.limites","DET073","1","action"
+
+"HC31","Agregar vale de dotación de insumos","Agregar","","/!/rhgfcdi/dotacion/_new/","0","rhgfcdi.dotacion","DET074","0","action"
+"HC32","Editar vale de dotación de insumos","Editar","","/!/rhgfcdi/dotacion/@_src_context_item_id/","0","rhgfcdi.dotacion","DET074","1","action"
+"HC33","Eliminar vale de dotación de insumos","Eliminar","","javascript:InduxsoftCrudlModel.Delete(@_src_context_item_id)","0","rhgfcdi.dotacion","DET074","1","action"

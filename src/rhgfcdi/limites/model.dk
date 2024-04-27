@@ -51,7 +51,7 @@ module "Administración de límites en la dotación de insumos por puesto :limit
         IFNULL(lim.precio,0) AS precio,
         prod.descripcion AS insumo,
         pt.descripcion AS puesto,
-        fr.const AS cfrecuencia,
+        fr.const AS cfrecuencia
     FROM #<@table_name> AS lim
         INNER JOIN producto AS prod ON lim.ref_insumo = prod.sys_pk
         INNER JOIN rh_puesto_org AS pt ON lim.ref_puesto = pt.sys_pk
@@ -59,7 +59,7 @@ module "Administración de límites en la dotación de insumos por puesto :limit
     WHERE lim.#<@keyfield> = @_entity_id
     "
 
-    buscarInsumo::%db,&params
+    buscarInsumo::&db,&params
     {
         sql_buscar_producto = "SELECT sys_pk, codigo, descripcion, unidad FROM producto WHERE #<conditions>"
 
@@ -87,17 +87,17 @@ module "Administración de límites en la dotación de insumos por puesto :limit
             u.descripcion AS unidad
         FROM rh_puesto_org AS p
             LEFT JOIN rh_unidad_org AS u ON p.ref_unidad_org = u.sys_pk
-        WHERE #<condition>
+        WHERE #<conditions>
         "
 
         if trim(@@(params,"$id")) != ""
         {
-            condition = "p.sys_pk = @id"
+            conditions = "p.sys_pk = @id"
             return dbr.rec(db,ftext(sql_buscar_puesto),params)
         }
         if trim(@@(params,"$search")) != ""
         {
-            condition = "(p.codigo LIKE CONCAT('%',@search,'%') OR p.descripcion LIKE CONCAT('%',@search,'%'))"
+            conditions = "(p.codigo LIKE CONCAT('%',@search,'%') OR p.descripcion LIKE CONCAT('%',@search,'%'))"
             return dbr.list(db,ftext(sql_buscar_puesto),params)
         }
 

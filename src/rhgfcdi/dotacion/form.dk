@@ -1,0 +1,119 @@
+#include "dkli.dkh"
+#!
+module "form.dk"
+{
+    #include "functions.dkh"
+    #include "serialize.dkh"
+    #include "uielements.v12.dkl"
+    #include "../_lib/config.dk"
+    #include "../_lib/lib.dk"
+	#include "../_lib/icons.dk"
+
+    do @context.begin(@crud_context)
+
+    ref @_GET = ifnull(@("&parameters"),record.create())
+    ref entity = ifnull(@("&./entity"),record.create())
+    ref dtinsumo = ifnull(@("&./dtinsumo"),record.create())
+    ref dtempleado = ifnull(@("&./dtempleado"),record.create())
+
+	@_entities_type = @("$parameters/_entities_type")
+	@_entity_id = @("$parameters/_entity_id")
+
+	isNew = (@_entity_id == "_new")
+
+    header_act::
+    {
+        #$
+        button(type="submit" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print"){$"#<@ICON_SAVE>"}
+        #!
+    }
+    point general_act to header_act
+
+    new nav_config
+    {
+        @"title": ftext("#<ifstr(isNew,'Agregar','Editar') + ' vale'>")
+        @"buttons*": general_act
+        @"urlexit": "../"
+        member @"hidden" { @"print": @true }
+    }
+
+    #$ div(class="container")
+    {
+        form(method="POST" action="./" id="form-dotacion")
+        {
+            #! do uie.printV12FormBar(nav_config)
+
+            #$ div(id="work_area" class="container-section")
+            {
+                div(class="#<ifstr(@('error/message')!='','alert alert-danger','')> overflow-auto"){$"#<@('error/message')>"}
+
+                input(type="hidden" name="sys_pk" value="#<@@(entity, '#sys_pk')>")
+                input(type="hidden" name="sys_recver" value="#<@@(entity, '#sys_recver')>")
+
+                div(class="row")
+                {
+                    div(class="col-lg-6 col-md-6 col-sm-12")
+                    {
+                        label(class="form-label fw-bold" "for"="ik_puesto"){$"Empleado:"}
+                        "input-key"(name="ref_empleado" id="ik_empleado" "data-key"="sys_pk" "data-search"="codigo" "data-text"="nombre" "data-source"="#<@URL_BUSCAR_EMPLEADO>" "data-value"="#<to.json(dtempleado)>" columns="codigo,nombre,apellido1" colcaptions="Código,Nombre,Apellido" required="true"){$""}
+                    }
+                    div(class="col-lg-6 col-md-6 col-sm-12")
+                    {
+                        label(class="form-label fw-bold" "for"="ik_insumo"){$"Material o Insumo:"}
+                        "input-key"(name="producto" id="ik_insumo" "data-key"="sys_pk" "data-search"="codigo" "data-text"="descripcion" "data-source"="#<@URL_BUSCAR_INSUMO>" "data-value"="#<to.json(dtinsumo)>" columns="codigo,descripcion,unidad" colcaptions="Código,Insumo,Unidad" required="true"){$""}
+                    }
+                    div(class="col-lg-3 col-md-3 col-sm-4")
+                    {
+                        label(class="form-label fw-bold" "for"="txt_fecha"){$"Fecha:"}
+                        input(class="form-control rounded-0" type="date" name="fecha" value="#<lib.form('fecha','dt',entity)>" id="txt_date" required="")
+                    }
+                    div(class="col-lg-3 col-md-3 col-sm-4")
+                    {
+                        label(class="form-label fw-bold" "for"="sel_almacen"){$"Almacen:"}
+                        select(class="form-select rounded-0" name="almacen" value="#<lib.form('almacen','nm',entity)>" id="sel_almacen" required=""){$""}
+                    }
+                    div(class="col-lg-2 col-md-2 col-sm-4")
+                    {
+                        label(class="form-label fw-bold" "for"="txt_cantidad"){$"Cantidad:"}
+                        input(class="form-control rounded-0" type="number" name="cantidad" value="#<lib.form('cantidad','nm',entity)>" id="txt_cantidad" min="1" max="99999999.9999" step="00000000.0001" required="")
+                    }
+                    div(class="col-lg-2 col-md-2 col-sm-4")
+                    {
+                        label(class="form-label" "for"="txt_precio"){$"Precio:"}
+                        input(class="form-control rounded-0" type="number" name="precio" value="#<lib.form('precio','nm',entity)>" id="txt_precio" min="0" max="99999999.9999" step="00000000.0001")
+                    }
+                    div(class="col-lg-2 col-md-2 col-sm-4")
+                    {
+                        label(class="form-label" "for"="txt_unidad"){$"Unidad:"}
+                        input(class="form-control-plaintext text-uppercase rounded-0" type="text" name="unidad" value="#<lib.form('unidad','tx',entity)>" id="txt_unidad" readonly="")
+                    }
+                    div(class="col-12")
+                    {
+                        label(class="form-label" "for"="txt_notas"){$"Notas:"}
+				        textarea(class="form-control rounded-0" name="notas" id="txt_notas" rows="5"){$"#<lib.form('notas','tx',entity)>"}
+
+                        div(class="form-check my-1")
+                        {
+                            #!
+                            checked = "checked"
+                            if not(isNew) { checked = lib.form("excedente","ch",entity) }
+                            #$
+                            input(class="form-check-input" type="checkbox" name="excedente" id="chk_excedente" "#<checked>"="")
+                            label(class="form-check-label" "for"="chk_excedente"){$"Excedente"}
+                        }
+                    }
+                }
+            }
+        }
+
+        #$
+        script(src="#<@JS_DOTACION>"){$""}
+        script(type="text/javascript")
+        {$'
+            document.addEventListener("DOMContentLoaded", () => {
+                dotacion.url_obtener_almacenes = "#<@URL_OBTENER_ALMACENES>";
+                dotacion.init();
+            });
+        '}
+    }
+}

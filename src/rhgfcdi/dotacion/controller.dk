@@ -1,0 +1,28 @@
+#include "dkli.dkh"
+#!
+module "DotacionController"
+{
+    switch @@(@http_context,"$request/get/_view")
+    {
+        case "buscar-empleado"
+        {
+            point @list to dotacion.buscarEmpleado
+            break
+        }
+        case "obtener-almacenes"
+        {
+            point @list to dotacion.obtenerAlmacenes
+            break
+        }
+        default
+        {
+            point @list to dotacion.list
+            point @read to dotacion.read
+            point @blank to dotacion.blank
+            point @create to dotacion.create
+            point @update to dotacion.update
+            point @delete to dotacion.delete
+            break
+        }
+    }
+}

@@ -1,0 +1,276 @@
+#include "dkli.dkh"
+#!
+module "Gestión de dotación de insumos a empleados :dotacion"
+{
+    @table_name = "rhgfcdi_mov"
+    @keyfield = "sys_pk"
+    @sys_fields = "sys_pk,sys_guid,sys_dtcreated,sys_timestamp,sys_info,sys_user,sys_lastuser,sys_exported,sys_dtexported,sys_recver,sys_deleted,sys_lock"
+
+    @create_fields = @sys_fields + ",ref_empleado,fecha,notas,usuario,producto,unidad,cantidad,ref_cardex,excedente,precio"
+    @update_fields = @sys_fields + ",ref_empleado,fecha,notas,usuario,producto,unidad,cantidad,ref_cardex,excedente,precio"
+    
+    @create_exclude_fields = "sys_lastuser"
+    @update_exclude_fields = "sys_pk,sys_guid,sys_dtcreated,sys_user"
+    
+    @create_alias_fields = ""
+    @update_alias_fields = ""
+
+    @list_query = "
+    SELECT
+        t1.sys_pk,
+        t1.sys_guid,
+        CONCAT(emp.nombre,' ',IFNULL(emp.apellido1,'')) AS empleado,
+        DATE_FORMAT(t1.fecha,'%Y-%m-%d') AS fecha,
+        usr.username AS uentrego,
+        prod.descripcion AS insumo,
+        t1.unidad,
+        t1.cantidad,
+        IF(t1.excedente, 'Si', 'No') AS dexcedente,
+        CONCAT('$',FORMAT(IFNULL(t1.precio,0),4)) AS precio,
+        IFNULL(t1.notas,'') AS notas
+    FROM #<@table_name> AS t1
+        INNER JOIN rh_empleado_org AS emp ON t1.ref_empleado = emp.sys_pk
+        INNER JOIN tuser AS usr ON t1.usuario = usr.sys_pk
+        INNER JOIN producto AS prod ON t1.`producto` = prod.sys_pk
+    WHERE NOT IFNULL(t1.sys_deleted,0)
+        #<conditions>
+    LIMIT #<@default_max_rows>
+    "
+
+    @read_query = "
+    SELECT
+        t1.sys_pk,
+        t1.sys_guid,
+        t1.sys_recver,
+        t1.ref_empleado,
+        t1.fecha,
+        t1.usuario,
+        t1.`producto`,
+        t1.unidad,
+        t1.cantidad,
+        t1.ref_cardex,
+        IFNULL(t1.excedente,0) AS excedente,
+        IFNULL(t1.precio,0) AS precio,
+        IFNULL(t1.notas,'') AS notas
+    FROM #<@table_name> AS t1
+    WHERE t1.#<@keyfield> = @_entity_id
+    "
+
+    buscarEmpleado::&db,&params
+    {
+        sql_buscar_empleado = "
+        SELECT
+            sys_pk,
+            codigo,
+            nombre,
+            IFNULL(apellido1,0) apellido1,
+            IFNULL(apellido2,0) apellido2,
+            rfc,
+            curp,
+            IFNULL(nss,'') nss
+        FROM rh_empleado_org
+        WHERE #<conditions>
+        "
+
+        if trim(@@(params,"$id")) != ""
+        {
+            conditions = "sys_pk = @id"
+            return dbr.rec(db,ftext(sql_buscar_empleado),params)
+        }
+        if trim(@@(params,"$search")) != ""
+        {
+            conditions = "
+            NOT IFNULL(sys_deleted,0)
+            AND (codigo LIKE CONCAT('%',@search,'%') 
+                OR nombre LIKE CONCAT('%',@search,'%')
+                OR apellido1 LIKE CONCAT('%',@search,'%')
+                OR apellido2 LIKE CONCAT('%',@search,'%')
+                OR rfc LIKE CONCAT('%',@search,'%')
+                OR curp LIKE CONCAT('%',@search,'%')
+                OR nss LIKE CONCAT('%',@search,'%')
+            )"
+            return dbr.list(db,ftext(sql_buscar_empleado),params)
+        }
+
+        return list.create()
+    }
+
+    buscarInsumo::&db,&params
+    {
+        sql_buscar_producto = "SELECT sys_pk, codigo, descripcion, unidad FROM producto WHERE #<conditions>"
+
+        if trim(@@(params,"$id")) != ""
+        {
+            conditions = "sys_pk = @id"
+            return dbr.rec(db,ftext(sql_buscar_producto),params)
+        }
+        if trim(@@(params,"$search")) != ""
+        {
+            conditions = "(codigo LIKE CONCAT('%',@search,'%') OR descripcion LIKE CONCAT('%',@search,'%')) AND NOT IFNULL(sys_deleted,0)"
+            return dbr.list(db,ftext(sql_buscar_producto),params)
+        }
+
+        return list.create()
+    }
+
+    obtenerAlmacenes::&db,&params
+    {
+        sql_almacenes_autorizados = "
+
+        "
+
+        sql_list_almacenes = "SELECT sys_pk AS ialmacen, CONCAT('[',codigo,']',' ',descripcion) AS dalmacen FROM almacen WHERE NOT IFNULL(sys_deleted,0)"
+        return dbr.list(db,sql_list_almacenes,@null)
+    }
+
+    obtenerEmpleado::&db,id
+    {
+        new params { @"id":id }
+        return dotacion.buscarEmpleado(db,params)
+    }
+
+    obtenerInsumo::&db,id
+    {
+        new params { @"id":id }
+        return limite.buscarInsumo(db,params)
+    }
+
+    prepareView::&db,&params,&data
+    {
+        namespace "dotacion"
+
+        _entity_id = @@(params,"$_entity_id")
+        _operation = @@(params,"$_operation")
+        
+        isNew = (_entity_id == "_new")
+
+        if field.exist(data,"form")
+        {
+            data<"dtinsumo*"> : obtenerInsumo(db,@@(data,"#form/producto"))
+            data<"dtempleado*"> : obtenerEmpleado(db,@@(data,"#form/ref_empleado"))
+        }
+        else if field.exist(data,"entity")
+        {
+            data<"dtinsumo*"> : obtenerInsumo(db,@@(data,"#entity/producto"))
+            data<"dtempleado*"> : obtenerEmpleado(db,@@(data,"#entity/ref_empleado"))
+        }
+    }
+
+    evaluateFilters::&params
+    {
+        conditions = ""
+
+        if trim(@@(params,"$fil_text")) != "" {
+            conditions = conditions + "
+            AND (emp.codigo LIKE CONCAT('%',@search,'%')
+                OR emp.nombre LIKE CONCAT('%',@search,'%')
+                OR emp.apellido1 LIKE CONCAT('%',@search,'%')
+                OR emp.apellido2 LIKE CONCAT('%',@search,'%')
+                OR emp.rfc LIKE CONCAT('%',@search,'%')
+                OR emp.curp LIKE CONCAT('%',@search,'%')
+                OR emp.nss LIKE CONCAT('%',@search,'%')
+                OR prod.descripcion LIKE CONCAT('%',@fil_text,'%')
+            )"
+        }
+
+        @list_query = ftext(@list_query)
+    }
+
+    list::&db,&params
+    {
+        do dotacion.evaluateFilters(params)
+
+        new data
+        {
+            @"dotaciones*": entity.list(db,params)
+            @"itemactions*": dbr.apps.itemactions(db,"DET074","action","",0)
+            @"itemreports*": dbr.apps.itemactions(db,"DET074","report","",0)
+        }
+
+        return data
+    }
+
+    read::&db,&params
+    {
+        new data
+        {
+            @"entity*": entity.read(db,params)
+        }
+        do dotacion.prepareView(db,params,data)
+
+        return data
+    }
+
+    blank::&db,&params
+    {
+        new data {}
+        do dotacion.prepareView(db,params,data)
+
+        return data
+    }
+
+    create::&db,&params,&data
+    {
+        namespace "dotacion"
+
+        using data
+        {
+            @"sys_user": @@(@http_context,"$session/user/uid")
+            @"excedente": parse.bool(trim(@@(data,"$excedente")))
+            @"usuario": lib.GetPkUsr(db, @@(@http_context,"$session/user/uid"))
+        }
+
+        do entity.create(db,params,data)
+
+        exception
+        {
+            do errordet(@false)
+            if dbr.in_transaction(db) { do dbr.rollback(db) }
+
+            ref FormData = record.copy(data,"*")
+            code = last_error_code()
+            error = last_error()
+
+            do record.clear(data)
+            data<"form*"> : FormData
+
+            do prepareView(db,params,data)
+            do rise_error(code,error)
+        }
+    }
+
+    update::&db,&params,&data
+    {
+        namespace "dotacion"
+
+        using data
+        {
+            @"sys_lastuser": @@(@http_context,"$session/user/uid")
+            @"excedente": parse.bool(trim(@@(data,"$excedente")))
+            @"usuario": lib.GetPkUsr(db, @@(@http_context,"$session/user/uid"))
+        }
+
+        do entity.update(db,params,data)
+
+        exception
+        {
+            do errordet(@false)
+            if dbr.in_transaction(db) { do dbr.rollback(db) }
+
+            ref FormData = record.copy(data,"*")
+            code = last_error_code()
+            error = last_error()
+
+            do record.clear(data)
+            data<"form*"> : FormData
+
+            do prepareView(db,params,data)
+            do rise_error(code,error)
+        }
+    }
+
+    delete::&db,&params
+    {
+        do rise_error(500,"Acción no implementada")
+    }
+}

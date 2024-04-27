@@ -1,1 +1,1 @@
-[{"pattern":"/_program/","routes":[{"route":"/almacenes/","entity_type":"almacenes"},{"route":"/limites/","entity_type":"limites"}]}]
+[{"pattern":"/_program/","routes":[{"route":"/almacenes/","entity_type":"almacenes"},{"route":"/limites/","entity_type":"limites"},{"route":"/dotacion/","entity_type":"dotacion"}]}]

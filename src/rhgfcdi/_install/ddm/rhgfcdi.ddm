@@ -8,6 +8,15 @@ model "rhgfcdi"
     #include "induxsoft.abstracts.ddm"
 
     //* ======================================== [ DEPENDENCIAS (FK) ]
+    // Enumeración de clases de productos
+    entity "cclaseproducto" : "EnumModel" {}
+    // Enumeración de tipos de categoria
+    entity "ctiposcategorias" : "EnumModel" {}
+    // Enumeración de tipo de productos
+    entity "ctipoproducto" : "EnumModel" {}
+    // Enumeración de metodos de valuación en inventarios
+    entity "cmetodosvaluacion" : "EnumModel" {}
+
     //#region Domicilio
     entity "pais" : "TableModel"
     {
@@ -65,6 +74,318 @@ model "rhgfcdi"
 		@"notas" string(4096)
 		@"link" string(1024)
 	}
+    // Enumeración de niveles de escolaridad
+    entity "rh_nvl_escolaridad" : "EnumModel"
+    {
+        /**
+        * 0-Sin instrucción
+        * 1-Básica
+        * 2-Medio superior
+        * 3-Licenciatura
+        * 4-Maestría o especialidad
+        * 5-Doctorado
+        * 6-Post-doctorado
+        */
+    }
+    // Enumeración de estados civil
+    entity "rh_edo_civil" : "EnumModel"
+    {
+        /**
+        * 0-Desconocido
+        * 1-Soltero
+        * 2-Casado
+        * 3-Divorciado
+        * 4-Unión Libre
+        * 5-Viudo
+        */
+    }
+    // Enumeración de tipos de vivienda
+    entity "rh_tipo_vivienda" : "EnumModel"
+    {
+        /**
+        * 0-Desconocido
+        * 1-Vivienda propia
+        * 2-Vivienda rentada
+        * 3-Vivienda familiar
+        * 4-Vivienda prestada
+        */
+    }
+    // Categorias de empleado
+    entity "rh_categoria_empleado" : "TableModel"
+    {
+        @"nombre" string(50) unique required
+        @"notas" string(4096) 
+    }
+    // Puestos de empleados
+    entity "rh_puesto_org" : "TableModel"
+    {
+        @"codigo" string(32) unique required
+        @"descripcion" string(150) required
+        @"sat_riesgopuesto" string(5)
+        @"perfil" string(4096)
+        @"responsabilidades" string(4096)
+        @"funciones" string(4096)
+        @"beneficios" string(4096)
+        @"salariomensualbruto" decimal(16,4)
+        @"divisa" string(5)
+        @"ref_jefe" ref:"rh_puesto_org"
+        @"ref_unidad_org" ref:"rh_unidad_org"
+        @"notas" string(4096)
+        @"escolaridad" ref:"rh_nvl_escolaridad" required
+        @"plazas_previstas" int
+        @"link" string(1024)
+        @"smbofrecidos" decimal(8,2)
+    }
+    // Catálogo de empleados
+    entity "rh_empleado_org" : "TableModel"
+    {
+        @"codigo" string(32) unique required
+        @"nombre" string(100) required
+        @"apellido1" string(100)
+        @"apellido2" string(100)
+        @"rfc" string(15) unique required
+        @"curp" string(25) unique required
+        @"fnacimiento" date required
+        @"fingreso" date
+        @"fcontratacion" date
+        @"sat_regimenfiscal" string(5)
+        @"sat_cp" string(5)
+        @"foto" string(32)
+        @"factualizacionfoto" datetime
+        @"nacionalidad" string(50)
+        @"edocivil" ref:"rh_edo_civil" required
+        @"conyuge" string(150)
+        @"depeconomicos" int
+        @"hijos" int
+        @"pension" bool
+        @"ingresonecesario" decimal(14,4)
+        @"tipovivienda" ref:"rh_tipo_vivienda"
+        @"gastofamiliarmensual" decimal(14,4)
+        @"aportaciongasto" decimal(6,2)
+        @"fechaestudiosocioe" date
+        @"escolaridad" ref:"rh_nvl_escolaridad" required
+        @"titulos" string(150)
+        @"competencias" string(4096)
+        @"estrellas" int
+        @"cerebros" int
+        @"focos" int
+        @"tachas" int
+        @"notas" string(4096)
+        @"totalmiembrosfam" int
+        @"obs_socio" string(4096)
+        @"ref_categoria" ref:"rh_categoria_empleado"
+        @"nss" string(50)
+    }
+    // Catálogo de monedas o divisas
+    entity "divisa" : "TableModel"
+    {
+        @"codigo" string(5) unique required
+        @"descripcion" string(30) unique required
+        @"tcambio" decimal(18,8)
+    }
+    // linea
+    entity "linea" : "TableModel"
+    {
+        @"clase" ref:"cclaseproducto" required
+        @"codigo" string(15) unique required
+        @"color" int
+        @"comision1" decimal(18,8)
+        @"comision2" decimal(18,8)
+        @"comision3" decimal(18,8)
+        @"comision4" decimal(18,8)
+        @"comision5" decimal(18,8)
+        @"descripcion" string(50) unique required
+        @"notas" string(4096)
+        @"visible" bool
+        @"uf_indicaciones" string(4096)
+    }
+    // Configuracion de impuesto por zona
+    entity "cfgimpuesto" : "TableModel"
+    {
+        @"i1compra" string(4096)
+        @"i1venta" string(4096)
+        @"i2compra" string(4096)
+        @"i2venta" string(4096)
+        @"i3compra" string(4096)
+        @"i3venta" string(4096)
+        @"i4compra" string(4096)
+        @"i4venta" string(4096)
+        @"nombre" string(25) unique required
+        @"uf_tipoi1" string(25)
+        @"uf_tipoi2" string(25)
+        @"uf_tipoi3" string(25)
+        @"uf_tipoi4" string(25)
+        @"tasa" bool
+        @"objetoimp" string(2)
+    }
+    // Información de productos
+    entity "producto" : "TableModel"
+    {
+        /* @"adicional" bool
+        @"cdirecto" decimal(18,8)
+        @"cindirecto" decimal(18,8)
+        @"cmanoobra" decimal(18,8)
+        @"cmaquinaria" decimal(18,8) */
+        @"codbar1" string(35) unique
+        @"codbar2" string(35) unique
+        @"codbar3" string(35) unique
+        @"codigo" string(35) unique required
+        /* @"color" int
+        @"comision" decimal(18,8)
+        @"comision1" decimal(18,8)
+        @"comision2" decimal(18,8)
+        @"comision3" decimal(18,8)
+        @"comision4" decimal(18,8)
+        @"comision5" decimal(18,8)
+        @"costopromedio" decimal(18,8)
+        @"costoultimo" decimal(18,8)
+        @"data1" string(500)
+        @"data2" string(500)
+        @"data3" string(500)
+        @"desc2" decimal(18,8)
+        @"desc3" decimal(18,8)
+        @"desc4" decimal(18,8)
+        @"desc5" decimal(18,8) */
+        @"descripcion" string(150) unique required
+        // @"diasentrega" int
+        // @"existencia" decimal(18,8)
+        // @"factorb" decimal(18,8)
+        // @"factorc" decimal(18,8)
+        // @"factord" decimal(18,8)
+        // @"factore" decimal(18,8)
+        // @"flaglimites" bool
+        // @"flagutilidad" bool
+        // @"formacomision" ref:"cformacomisionproducto"
+        @"iclase" ref:"cclaseproducto" required
+        @"itipo" ref:"ctipoproducto" required
+        /* @"lim2" decimal(18,8)
+        @"lim3" decimal(18,8)
+        @"lim4" decimal(18,8)
+        @"lim5" decimal(18,8)
+        @"maximo" decimal(18,8) */
+        @"metodovaluacion" ref:"cmetodosvaluacion" required
+        /* @"minimo" decimal(18,8)
+        @"notas" memo
+        @"padic1" decimal(18,8)
+        @"padic2" decimal(18,8)
+        @"padic3" decimal(18,8)
+        @"padic4" decimal(18,8)
+        @"padic5" decimal(18,8)
+        @"ppuntos" decimal(18,8)
+        @"precio1" decimal(18,8)
+        @"precio2" decimal(18,8)
+        @"precio3" decimal(18,8)
+        @"precio4" decimal(18,8)
+        @"precio5" decimal(18,8)
+        @"puntoro" decimal(18,8) */
+        @"reqlote" bool required
+        @"reqserie" bool required
+        // @"saldo" decimal(18,8)
+        // @"tipocomision" ref:"ctiposcomisionesproducto"
+        @"unidad" string(10) required
+        /* @"unidadb" string(10)
+        @"unidadc" string(10)
+        @"unidadd" string(10)
+        @"unidade" string(10)
+        @"util1" decimal(18,8)
+        @"util2" decimal(18,8)
+        @"util3" decimal(18,8)
+        @"util4" decimal(18,8)
+        @"util5" decimal(18,8)
+        @"utilmin" decimal(18,8)
+        @"vinculardata" bool
+        @"visible" bool */
+        // @"idepartamento" ref:"departamento"
+        @"idivisa" ref:"divisa" required
+        @"ilinea" ref:"linea" required
+        // @"imarca" ref:"marca"
+        @"impuestos" ref:"cfgimpuesto" required
+        // @"ivariables" int
+        // @"proveedor1" ref:"proveedor"
+        // @"proveedor2" ref:"proveedor"
+        // @"proveedor3" ref:"proveedor"
+        /* @"uf_solicitarcantidad" bool
+        @"uf_sys_baja" bool
+        @"uf_complemento" bool
+        @"precio106" decimal(18,8)
+        @"precio107" decimal(18,8)
+        @"precio108" decimal(18,8)
+        @"precio109" decimal(18,8)
+        @"precio110" decimal(18,8)
+        @"precio111" decimal(18,8)
+        @"precio112" decimal(18,8)
+        @"precio113" decimal(18,8)
+        @"precio114" decimal(18,8)
+        @"precio115" decimal(18,8)
+        @"precio116" decimal(18,8)
+        @"precio117" decimal(18,8)
+        @"precio118" decimal(18,8)
+        @"precio119" decimal(18,8)
+        @"precio120" decimal(18,8)
+        @"util106" decimal(18,8)
+        @"util107" decimal(18,8)
+        @"util108" decimal(18,8)
+        @"util109" decimal(18,8)
+        @"util110" decimal(18,8)
+        @"util111" decimal(18,8)
+        @"util112" decimal(18,8)
+        @"util113" decimal(18,8)
+        @"util114" decimal(18,8)
+        @"util115" decimal(18,8)
+        @"util116" decimal(18,8)
+        @"util117" decimal(18,8)
+        @"util118" decimal(18,8)
+        @"util119" decimal(18,8)
+        @"util120" decimal(18,8)
+        @"uf_codigoparaproveedor1" string(50)
+        @"uf_codigoparaproveedor2" string(50)
+        @"uf_codigoparaproveedor3" string(50)
+        @"uf_pdv" decimal(18,8)
+        @"uf_dv_diasreorden" int
+        @"uf_dv_inventarioseguridaddias" int
+        @"uf_gruposimilares" int
+        @"uf_inhabilitado" bool
+        @"uf_fechainhabilitacion" datetime */
+        @"uf_sat_proser" string(50) required
+        @"uf_sat_uniproser" string(50) required
+    }
+    // Usuarios
+    entity "tuser" : "TableModel"
+    {
+        @"locked" bool 
+        @"message" string(255) 
+        @"notes" memo 
+        @"pwd" string(32) 
+        @"userid" string(120) unique required
+        @"username" string(120) required
+        @"pwdmd5" string(64) 
+        @"external" bool // Si es true, el usuario se consiera externo.
+    }
+    // Categorias
+    entity "categoria" : "TableModel"
+    {
+        @"codcuenta" string(50) unique
+        @"codigo" string(5) unique required
+        @"descripcion" string(50) unique required
+        @"pmensual" decimal(18,8)
+        @"tipo" ref:"ctiposcategorias"
+        @"padre" ref:"categoria"
+        @"uf_inhabilitado" bool
+        @"uf_fechainhabilitacion" datetime
+    }
+    // Cardex
+    entity "cardex" : "TableModel"
+    {
+        @"aplicado" bool
+        @"descripcion" string(8192)
+        @"fecha" date
+        @"referencia" string(255) unique required
+        @"valuado" bool
+        // @"doccompra" ref:"compra"
+        // @"docorden" ref:"orden"
+        // @"docventa" ref:"venta"
+        @"icategoria" ref:"categoria" required
+    }
 
     //* ======================================== [ ENTIDADES PRINCIPALES ]
     // Enumeración de frecuencias para los limites de dotación de insumos
@@ -102,6 +423,20 @@ model "rhgfcdi"
         @"unidad" string(15) required
         @"costo_adic" bool
         @"precio" decimal(14,4)
+    }
+    // Gestión de dotación de insumos a empleados
+    entity "rhgfcdi_mov" :"TableModel"
+    {
+        @"ref_empleado" ref:"rh_empleado_org" required
+        @"fecha" date required
+        @"notas" memo
+        @"usuario" ref:"tuser" required // usuario que entrega
+        @"producto" ref:"producto" required
+        @"unidad" string(15) required
+        @"cantidad" decimal(12,4) required
+        @"ref_cardex" ref:"cardex" required
+        @"excedente" bool
+        @"precio" decimal(12,4)
     }
 
     //* ======================================== [ ... ]

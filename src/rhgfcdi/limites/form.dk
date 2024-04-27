@@ -13,6 +13,8 @@ module "form.dk"
 
     ref @_GET = ifnull(@("&parameters"),record.create())
     ref entity = ifnull(@("&./entity"),record.create())
+    ref dtinsumo = ifnull(@("&./dtinsumo"),record.create())
+    ref dtpuesto = ifnull(@("&./dtpuesto"),record.create())
     ref list_frecuencias = ifnull(@("&./list_frecuencias"),list.create())
 
 	@_entities_type = @("$parameters/_entities_type")
@@ -64,6 +66,16 @@ module "form.dk"
 
                 div(class="row")
                 {
+                    div(class="col-lg-6 col-md-6 col-sm-12")
+                    {
+                        label(class="form-label fw-bold" "for"="ik_insumo"){$"Material o Insumo:"}
+                        "input-key"(name="ref_insumo" id="ik_insumo" "data-key"="sys_pk" "data-search"="codigo" "data-text"="descripcion" "data-source"="#<@URL_BUSCAR_INSUMO>" "data-value"="#<to.json(dtinsumo)>" columns="codigo,descripcion,unidad" colcaptions="Código,Insumo,Unidad" required="true"){$""}
+                    }
+                    div(class="col-lg-6 col-md-6 col-sm-12")
+                    {
+                        label(class="form-label fw-bold" "for"="ik_puesto"){$"Puesto:"}
+                        "input-key"(name="ref_puesto" id="ik_puesto" "data-key"="sys_pk" "data-search"="codigo" "data-text"="descripcion" "data-source"="#<@URL_BUSCAR_PUESTO>" "data-value"="#<to.json(dtpuesto)>" columns="codigo,descripcion,unidad" colcaptions="Código,Insumo,Unidad" required="true"){$""}
+                    }
                     div(class="col-lg-3 col-md-3 col-sm-3")
                     {
                         label(class="form-label fw-bold" "for"="sel_frecuencia"){$"Frecuencia:"}
@@ -71,36 +83,53 @@ module "form.dk"
                         do uie.dbSelect(sel_frecuencia)
                         ##
                     }
-                    div(class="col-lg-3 col-md-3 col-sm-3")
+                    div(class="col-lg-2 col-md-2 col-sm-3")
                     {
                         label(class="form-label fw-bold" "for"="txt_intervalo"){$"Intervalo:"}
                         input(class="form-control rounded-0" type="number" name="intervalo" value="#<lib.form('intervalo','nm',entity)>" id="txt_intervalo" min="1" max="30" step="1" required="")
                     }
-                    div(class="col-lg-3 col-md-3 col-sm-3")
+                    div(class="col-lg-2 col-md-2 col-sm-3")
                     {
                         label(class="form-label fw-bold" "for"="txt_cantidad"){$"Cantidad:"}
                         input(class="form-control rounded-0" type="number" name="cantidad" value="#<lib.form('cantidad','nm',entity)>" id="txt_cantidad" min="1" max="999999.99" step="000000.01" required="")
                     }
-                    div(class="col-lg-3 col-md-3 col-sm-3")
+                    div(class="col-lg-2 col-md-2 col-sm-3")
                     {
                         label(class="form-label" "for"="txt_precio"){$"Precio:"}
                         input(class="form-control rounded-0" type="number" name="precio" value="#<lib.form('precio','nm',entity)>" id="txt_precio" min="0" max="9999999999.9999" step="0000000000.0001")
                     }
-
+                    div(class="col-lg-2 col-md-3 col-sm-3")
+                    {
+                        label(class="form-label" "for"="txt_unidad"){$"Unidad:"}
+                        input(class="form-control-plaintext text-uppercase rounded-0" type="text" name="unidad" value="#<lib.form('unidad','tx',entity)>" id="txt_unidad" readonly="")
+                    }
                     div(class="col-12")
                     {
-                        div(class="form-check")
+                        div(class="form-check my-1")
                         {
                             #!
                             checked = "checked"
                             if not(isNew) { checked = lib.form("costo_adic","ch",entity) }
                             #$
                             input(class="form-check-input" type="checkbox" name="costo_adic" id="chk_costo_adic" "#<checked>"="")
-                            label(class="form-check-label" "for"="chk_costo_adic"){$"Cobrar al empleado si sobrepasa el límite"}
+                            label(class="form-check-label" "for"="chk_costo_adic"){$"Cobrar al empleado el precio indicado si sobrepasa el límite"}
                         }
                     }
                 }
             }
         }
+
+        #$
+        script(type="text/javascript")
+        {$'
+            document.addEventListener("DOMContentLoaded", () => {
+                const ik_insumo = document.getElementById("ik_insumo");
+                const txt_unidad = document.getElementById("txt_unidad");
+
+                ik_insumo.addEventListener("change", (data) => {
+                    txt_unidad.value = (data.unidad ?? "").toUpperCase();
+                });
+            });
+        '}
     }
 }
