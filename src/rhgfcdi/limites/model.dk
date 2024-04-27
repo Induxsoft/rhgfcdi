@@ -1,0 +1,241 @@
+#include "dkli.dkh"
+#!
+module "Administración de límites en la dotación de insumos por puesto :limite"
+{
+    @table_name = "rhgfcdi_limite"
+    @keyfield = "sys_pk"
+    @sys_fields = "sys_pk,sys_guid,sys_dtcreated,sys_timestamp,sys_info,sys_user,sys_lastuser,sys_exported,sys_dtexported,sys_recver,sys_deleted,sys_lock"
+
+    @create_fields = @sys_fields + ",ref_insumo,ref_puesto,frecuencia,intervalo,cantidad,unidad,costo_adic,precio"
+    @update_fields = @sys_fields + ",ref_insumo,ref_puesto,frecuencia,intervalo,cantidad,unidad,costo_adic,precio"
+    
+    @create_exclude_fields = "sys_lastuser"
+    @update_exclude_fields = "sys_pk,sys_guid,sys_dtcreated,sys_user"
+    
+    @create_alias_fields = ""
+    @update_alias_fields = ""
+
+    @list_query = "
+    SELECT
+        lim.sys_pk,
+        lim.sys_guid,
+        prod.descripcion AS insumo,
+        pt.descripcion AS puesto,
+        fr.const AS cfrecuencia,
+        lim.intervalo,
+        lim.cantidad,
+        lim.unidad,
+        IF(lim.costo_adic, 'Si', 'No') AS dcosto_adic,
+        CONCAT('$',FORMAT(IFNULL(lim.precio,0),4)) AS precio
+    FROM #<@table_name> AS lim
+        INNER JOIN producto AS prod ON lim.ref_insumo = prod.sys_pk
+        INNER JOIN rh_puesto_org AS pt ON lim.ref_puesto = pt.sys_pk
+        INNER JOIN rhgfcdi_limite_freq AS fr ON lim.frecuencia = fr.id
+    WHERE NOT IFNULL(lim.sys_deleted,0)
+        #<conditions>
+    LIMIT #<@default_max_rows>
+    "
+
+    @read_query = "
+    SELECT
+        lim.sys_pk,
+        lim.sys_guid,
+        lim.sys_recver,
+        lim.ref_insumo,
+        lim.ref_puesto,
+        lim.frecuencia,
+        lim.intervalo,
+        lim.cantidad,
+        lim.unidad,
+        IFNULL(lim.costo_adic,0) AS costo_adic,
+        IFNULL(lim.precio,0) AS precio,
+        prod.descripcion AS insumo,
+        pt.descripcion AS puesto,
+        fr.const AS cfrecuencia,
+    FROM #<@table_name> AS lim
+        INNER JOIN producto AS prod ON lim.ref_insumo = prod.sys_pk
+        INNER JOIN rh_puesto_org AS pt ON lim.ref_puesto = pt.sys_pk
+        INNER JOIN rhgfcdi_limite_freq AS fr ON lim.frecuencia = fr.id
+    WHERE lim.#<@keyfield> = @_entity_id
+    "
+
+    buscarInsumo::%db,&params
+    {
+        sql_buscar_producto = "SELECT sys_pk, codigo, descripcion, unidad FROM producto WHERE #<conditions>"
+
+        if trim(@@(params,"$id")) != ""
+        {
+            conditions = "sys_pk = @id"
+            return dbr.rec(db,ftext(sql_buscar_producto),params)
+        }
+        if trim(@@(params,"$search")) != ""
+        {
+            conditions = "(codigo LIKE CONCAT('%',@search,'%') OR descripcion LIKE CONCAT('%',@search,'%')) AND NOT IFNULL(sys_deleted,0)"
+            return dbr.list(db,ftext(sql_buscar_producto),params)
+        }
+
+        return list.create()
+    }
+
+    buscarPuesto::&db,&params
+    {
+        sql_buscar_puesto = "
+        SELECT
+            p.sys_pk,
+            p.codigo,
+            p.descripcion,
+            u.descripcion AS unidad
+        FROM rh_puesto_org AS p
+            LEFT JOIN rh_unidad_org AS u ON p.ref_unidad_org = u.sys_pk
+        WHERE #<condition>
+        "
+
+        if trim(@@(params,"$id")) != ""
+        {
+            condition = "p.sys_pk = @id"
+            return dbr.rec(db,ftext(sql_buscar_puesto),params)
+        }
+        if trim(@@(params,"$search")) != ""
+        {
+            condition = "(p.codigo LIKE CONCAT('%',@search,'%') OR p.descripcion LIKE CONCAT('%',@search,'%'))"
+            return dbr.list(db,ftext(sql_buscar_puesto),params)
+        }
+
+        return list.create()
+    }
+
+    obtenerInsumo::&db,id
+    {
+        new params { @"id":id }
+        return limite.buscarInsumo(db,params)
+    }
+
+    obtenerPuesto::&db,id
+    {
+        new params { @"id":id }
+        return limite.buscarPuesto(db,params)
+    }
+
+    prepareView::&db,&params,&data
+    {
+        namespace "limite"
+
+        _entity_id = @@(params,"$_entity_id")
+        _operation = @@(params,"$_operation")
+        
+        isNew = (_entity_id == "_new")
+
+        if field.exist(data,"form")
+        {
+            data<"dtinsumo*"> : obtenerInsumo(db,@@(data,"#form/ref_insumo"))
+            data<"dtpuesto*"> : obtenerPuesto(db,@@(data,"#form/ref_puesto"))
+        }
+        else if field.exist(data,"entity")
+        {
+            data<"dtinsumo*"> : obtenerInsumo(db,@@(data,"#entity/ref_insumo"))
+            data<"dtpuesto*"> : obtenerPuesto(db,@@(data,"#entity/ref_puesto"))
+        }
+
+        data<"list_frecuencias*"> : dbr.list(db,"SELECT id, const FROM rhgfcdi_limite_freq",@null)
+    }
+
+    evaluateFilters::&params
+    {
+        conditions = ""
+
+        if trim(@@(params,"$fil_text")) != "" {
+            conditions = conditions + "AND (prod.descripcion LIKE CONCAT('%',@fil_text,'%') OR pt.descripcion LIKE CONCAT('%',@fil_text,'%'))"
+        }
+
+        @list_query = ftext(@list_query)
+    }
+
+    list::&db,&params
+    {
+        do limite.evaluateFilters(params)
+
+        new data
+        {
+            @"limites*": entity.list(db,params)
+            @"itemactions*": dbr.apps.itemactions(db,"DET073","action","",0)
+            @"itemreports*": dbr.apps.itemactions(db,"DET073","report","",0)
+        }
+
+        return data
+    }
+
+    read::&db,&params
+    {
+        new data
+        {
+            @"entity*": entity.read(db,params)
+        }
+        do limite.prepareView(db,params,data)
+
+        return data
+    }
+
+    blank::&db,&params
+    {
+        new data {}
+        do limite.prepareView(db,params,data)
+
+        return data
+    }
+
+    create::&db,&params,&data
+    {
+        namespace "limite"
+
+        using data
+        {
+            @"costo_adic": parse.bool(trim(@@(data,"$costo_adic")))
+        }
+
+        do entity.create(db,params,data)
+
+        exception
+        {
+            do errordet(@false)
+            if dbr.in_transaction(db) { do dbr.rollback(db) }
+
+            ref FormData = record.copy(data,"*")
+            code = last_error_code()
+            error = last_error()
+
+            do record.clear(data)
+            data<"form*"> : FormData
+
+            do prepareView(db,params,data)
+            do rise_error(code,error)
+        }
+    }
+
+    update::&db,&params,&data
+    {
+        namespace "limite"
+
+        using data
+        {
+            @"costo_adic": parse.bool(trim(@@(data,"$costo_adic")))
+        }
+
+        do entity.update(db,params,data)
+
+        exception
+        {
+            do errordet(@false)
+            if dbr.in_transaction(db) { do dbr.rollback(db) }
+
+            ref FormData = record.copy(data,"*")
+            code = last_error_code()
+            error = last_error()
+
+            do record.clear(data)
+            data<"form*"> : FormData
+
+            do prepareView(db,params,data)
+            do rise_error(code,error)
+        }
+    }
+}

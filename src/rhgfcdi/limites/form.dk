@@ -1,0 +1,106 @@
+#include "dkli.dkh"
+#!
+module "form.dk"
+{
+    #include "functions.dkh"
+    #include "serialize.dkh"
+    #include "uielements.v12.dkl"
+    #include "../_lib/config.dk"
+    #include "../_lib/lib.dk"
+	#include "../_lib/icons.dk"
+
+    do @context.begin(@crud_context)
+
+    ref @_GET = ifnull(@("&parameters"),record.create())
+    ref entity = ifnull(@("&./entity"),record.create())
+    ref list_frecuencias = ifnull(@("&./list_frecuencias"),list.create())
+
+	@_entities_type = @("$parameters/_entities_type")
+	@_entity_id = @("$parameters/_entity_id")
+
+	isNew = (@_entity_id == "_new")
+
+    new sel_frecuencia
+    {
+        @"datatable*": list_frecuencias
+        @"id": "sel_frecuencia"
+        new member "attributes"
+        {
+            @"class": "form-select rounded-0"
+            @"name": "frecuencia"
+            @"required": ""
+        }
+        @"value_field": "id"
+        @"text_field": "const"
+        @"selected": lib.form("frecuencia","nm",entity)
+    }
+
+    header_act::
+    { 
+        #$ button(type="submit" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print"){$"#<@ICON_SAVE>"}
+    }
+    #! point general_act to header_act
+
+    new nav_config
+    {
+        @"title": ftext("#<ifstr(isNew,'Agregar','Editar') + ' ' +@_entities_type>")
+        @"buttons*": general_act
+        @"urlexit": "../"
+        member @"hidden" { @"print": @true }
+    }
+
+    #$ div(class="container")
+    {
+        form(method="POST" action="./" id="form-limite")
+        {
+            #! do uie.printV12FormBar(nav_config)
+
+            #$ div(id="work_area" class="container-section")
+            {
+                div(class="#<ifstr(@('error/message')!='','alert alert-danger','')> overflow-auto"){$"#<@('error/message')>"}
+
+                input(type="hidden" name="sys_pk" value="#<@@(entity, '#sys_pk')>")
+                input(type="hidden" name="sys_recver" value="#<@@(entity, '#sys_recver')>")
+
+                div(class="row")
+                {
+                    div(class="col-lg-3 col-md-3 col-sm-3")
+                    {
+                        label(class="form-label fw-bold" "for"="sel_frecuencia"){$"Frecuencia:"}
+                        ##
+                        do uie.dbSelect(sel_frecuencia)
+                        ##
+                    }
+                    div(class="col-lg-3 col-md-3 col-sm-3")
+                    {
+                        label(class="form-label fw-bold" "for"="txt_intervalo"){$"Intervalo:"}
+                        input(class="form-control rounded-0" type="number" name="intervalo" value="#<lib.form('intervalo','nm',entity)>" id="txt_intervalo" min="1" max="30" step="1" required="")
+                    }
+                    div(class="col-lg-3 col-md-3 col-sm-3")
+                    {
+                        label(class="form-label fw-bold" "for"="txt_cantidad"){$"Cantidad:"}
+                        input(class="form-control rounded-0" type="number" name="cantidad" value="#<lib.form('cantidad','nm',entity)>" id="txt_cantidad" min="1" max="999999.99" step="000000.01" required="")
+                    }
+                    div(class="col-lg-3 col-md-3 col-sm-3")
+                    {
+                        label(class="form-label" "for"="txt_precio"){$"Precio:"}
+                        input(class="form-control rounded-0" type="number" name="precio" value="#<lib.form('precio','nm',entity)>" id="txt_precio" min="0" max="9999999999.9999" step="0000000000.0001")
+                    }
+
+                    div(class="col-12")
+                    {
+                        div(class="form-check")
+                        {
+                            #!
+                            checked = "checked"
+                            if not(isNew) { checked = lib.form("costo_adic","ch",entity) }
+                            #$
+                            input(class="form-check-input" type="checkbox" name="costo_adic" id="chk_costo_adic" "#<checked>"="")
+                            label(class="form-check-label" "for"="chk_costo_adic"){$"Cobrar al empleado si sobrepasa el límite"}
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

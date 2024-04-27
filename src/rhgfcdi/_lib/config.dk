@@ -15,4 +15,7 @@ module
 	//* ======================================== [ _STATIC RESOURCES ]
 
 	//* ======================================== [ _PACKAGE ]
+	@CDI_ALMACENES = "/!/rhgfcdi/almacenes/"
+	@CDI_LIMITES = "/!/rhgfcdi/limites/"
+	@CDI_DOTACION = "/!/rhgfcdi/dotacion/"
 }

@@ -1,0 +1,27 @@
+#include "dkli.dkh"
+#!
+module "LimiteController"
+{
+    switch @@(@http_context,"$request/get/_view")
+    {
+        case "buscar-insumo"
+        {
+            point @list to limite.buscarInsumo
+            break
+        }
+        case "buscar-puesto"
+        {
+            point @list to limite.buscarPuesto
+            break
+        }
+        default
+        {
+            point @list to limite.list
+            point @read to limite.read
+            point @blank to limite.blank
+            point @create to limite.create
+            point @update to limite.update
+            break
+        }
+    }
+}

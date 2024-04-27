@@ -67,6 +67,16 @@ model "rhgfcdi"
 	}
 
     //* ======================================== [ ENTIDADES PRINCIPALES ]
+    // Enumeración de frecuencias para los limites de dotación de insumos
+    entity "rhgfcdi_limite_freq":"EnumModel"
+    {
+        /**
+        * 1-Dia
+        * 2-Semana
+        * 3-Mes
+        * 4-Año
+        */
+    }
     // Almacenes autorizados para proporcionar insumos a empleados
     entity "rhgfcdi_almacen":"TableModel"
     {
@@ -80,6 +90,18 @@ model "rhgfcdi"
             field "ref_almacen"
             field "ref_unidad"
         }
+    }
+    // Administración de límites en la dotación de insumos por puesto
+    entity "rhgfcdi_limite":"TableModel"
+    {
+        @"ref_insumo" ref:"producto" required
+        @"ref_puesto" ref:"rh_puesto_org" required
+        @"frecuencia" ref:"rhgfcdi_limite_freq" required
+        @"intervalo" int required
+        @"cantidad" decimal(8,2) required
+        @"unidad" string(15) required
+        @"costo_adic" bool
+        @"precio" decimal(14,4)
     }
 
     //* ======================================== [ ... ]

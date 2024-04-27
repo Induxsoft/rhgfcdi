@@ -1,2 +1,3 @@
 "pack_id","app_id","app_title","created","app_info"
 "rhgfcdi","rhgfcdi.almacenes","Almacenes",2024-04-26T23:59:59,"Almacenes autorizados para proporcionar insumos a empleados"
+"rhgfcdi","rhgfcdi.limites","Limites",2024-04-26T23:59:59,"Administración de límites en la dotación de insumos por puesto"
