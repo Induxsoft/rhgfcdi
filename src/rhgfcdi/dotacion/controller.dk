@@ -14,6 +14,11 @@ module "DotacionController"
             point @list to dotacion.obtenerAlmacenes
             break
         }
+        case "validar-excedente"
+        {
+            point @create to dotacion.validarExcedente
+            break
+        }
         default
         {
             point @list to dotacion.list

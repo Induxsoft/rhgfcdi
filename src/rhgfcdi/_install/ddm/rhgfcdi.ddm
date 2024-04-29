@@ -393,9 +393,9 @@ model "rhgfcdi"
     {
         /**
         * 1-Dia
-        * 2-Semana
-        * 3-Mes
-        * 4-Año
+        * 2-Semana calendario
+        * 3-Mes calendario
+        * 4-Año calendario
         */
     }
     // Almacenes autorizados para proporcionar insumos a empleados

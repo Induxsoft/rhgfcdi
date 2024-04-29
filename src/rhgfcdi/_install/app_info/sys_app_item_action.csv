@@ -9,5 +9,3 @@
 "HC23","Eliminar limite de dotación de insumos","Eliminar","","javascript:InduxsoftCrudlModel.Delete(@_src_context_item_id)","0","rhgfcdi.limites","DET073","1","action"
 
 "HC31","Agregar vale de dotación de insumos","Agregar","","/!/rhgfcdi/dotacion/_new/","0","rhgfcdi.dotacion","DET074","0","action"
-"HC32","Editar vale de dotación de insumos","Editar","","/!/rhgfcdi/dotacion/@_src_context_item_id/","0","rhgfcdi.dotacion","DET074","1","action"
-"HC33","Eliminar vale de dotación de insumos","Eliminar","","javascript:InduxsoftCrudlModel.Delete(@_src_context_item_id)","0","rhgfcdi.dotacion","DET074","1","action"

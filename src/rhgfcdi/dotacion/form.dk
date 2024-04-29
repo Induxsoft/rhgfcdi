@@ -24,7 +24,7 @@ module "form.dk"
     header_act::
     {
         #$
-        button(type="submit" class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print"){$"#<@ICON_SAVE>"}
+        button(class="btn btn-sm border-secondary induxsoft-corners btn-main-action no-print" type="button" id="btn_submit"){$"#<@ICON_SAVE>"}
         #!
     }
     point general_act to header_act
@@ -70,19 +70,19 @@ module "form.dk"
                     div(class="col-lg-3 col-md-3 col-sm-4")
                     {
                         label(class="form-label fw-bold" "for"="sel_almacen"){$"Almacen:"}
-                        select(class="form-select rounded-0" name="almacen" value="#<lib.form('almacen','nm',entity)>" id="sel_almacen" required=""){$""}
+                        select(class="form-select rounded-0" name="ialmacen" value="#<lib.form('ialmacen','nm',entity)>" id="sel_almacen" required=""){$""}
                     }
-                    div(class="col-lg-2 col-md-2 col-sm-4")
+                    div(class="col-lg-2 col-md-3 col-sm-4")
                     {
                         label(class="form-label fw-bold" "for"="txt_cantidad"){$"Cantidad:"}
                         input(class="form-control rounded-0" type="number" name="cantidad" value="#<lib.form('cantidad','nm',entity)>" id="txt_cantidad" min="1" max="99999999.9999" step="00000000.0001" required="")
                     }
-                    div(class="col-lg-2 col-md-2 col-sm-4")
+                    /* div(class="col-lg-2 col-md-2 col-sm-4")
                     {
                         label(class="form-label" "for"="txt_precio"){$"Precio:"}
                         input(class="form-control rounded-0" type="number" name="precio" value="#<lib.form('precio','nm',entity)>" id="txt_precio" min="0" max="99999999.9999" step="00000000.0001")
-                    }
-                    div(class="col-lg-2 col-md-2 col-sm-4")
+                    } */
+                    div(class="col-lg-2 col-md-3 col-sm-4")
                     {
                         label(class="form-label" "for"="txt_unidad"){$"Unidad:"}
                         input(class="form-control-plaintext text-uppercase rounded-0" type="text" name="unidad" value="#<lib.form('unidad','tx',entity)>" id="txt_unidad" readonly="")
@@ -92,26 +92,29 @@ module "form.dk"
                         label(class="form-label" "for"="txt_notas"){$"Notas:"}
 				        textarea(class="form-control rounded-0" name="notas" id="txt_notas" rows="5"){$"#<lib.form('notas','tx',entity)>"}
 
-                        div(class="form-check my-1")
+                        /* div(class="form-check my-1")
                         {
                             #!
-                            checked = "checked"
-                            if not(isNew) { checked = lib.form("excedente","ch",entity) }
+                            checked = ""
+                            if not(isNew) || field.exist(@("&."),"form") { checked = lib.form("excedente","ch",entity) }
                             #$
                             input(class="form-check-input" type="checkbox" name="excedente" id="chk_excedente" "#<checked>"="")
                             label(class="form-check-label" "for"="chk_excedente"){$"Excedente"}
-                        }
+                        } */
                     }
                 }
             }
         }
 
         #$
+        script(src="#<@JS_MAIN>"){$""}
         script(src="#<@JS_DOTACION>"){$""}
         script(type="text/javascript")
         {$'
             document.addEventListener("DOMContentLoaded", () => {
                 dotacion.url_obtener_almacenes = "#<@URL_OBTENER_ALMACENES>";
+                dotacion.url_validar_excedente = "#<@URL_VALIDAR_EXCEDENTE>";
+                dotacion.formId = "form-dotacion";
                 dotacion.init();
             });
         '}

@@ -43,7 +43,7 @@ module "Gestión de dotación de insumos a empleados :dotacion"
         t1.sys_guid,
         t1.sys_recver,
         t1.ref_empleado,
-        t1.fecha,
+        DATE_FORMAT(t1.fecha,'%Y-%m-%d') AS fecha,
         t1.usuario,
         t1.`producto`,
         t1.unidad,
@@ -116,11 +116,17 @@ module "Gestión de dotación de insumos a empleados :dotacion"
     obtenerAlmacenes::&db,&params
     {
         sql_almacenes_autorizados = "
-
+        SELECT
+            alm.sys_pk AS ialmacen, CONCAT('[',alm.codigo,']',' ',alm.descripcion) AS dalmacen
+        FROM rh_empleado_org AS emp
+            INNER JOIN rh_contrato_empleado AS cto ON cto.ref_empleado = emp.sys_pk
+            INNER JOIN rh_puesto_org AS pto ON cto.ref_puesto = pto.sys_pk
+            INNER JOIN rh_unidad_org AS uni ON pto.ref_unidad_org = uni.sys_pk
+            INNER JOIN rhgfcdi_almacen AS a ON a.ref_unidad = uni.sys_pk
+            INNER JOIN almacen AS alm ON a.ref_almacen = alm.sys_pk
+        WHERE emp.sys_pk = @iempleado;
         "
-
-        sql_list_almacenes = "SELECT sys_pk AS ialmacen, CONCAT('[',codigo,']',' ',descripcion) AS dalmacen FROM almacen WHERE NOT IFNULL(sys_deleted,0)"
-        return dbr.list(db,sql_list_almacenes,@null)
+        return dbr.list(db,sql_almacenes_autorizados,params)
     }
 
     obtenerEmpleado::&db,id
@@ -132,7 +138,7 @@ module "Gestión de dotación de insumos a empleados :dotacion"
     obtenerInsumo::&db,id
     {
         new params { @"id":id }
-        return limite.buscarInsumo(db,params)
+        return dotacion.buscarInsumo(db,params)
     }
 
     prepareView::&db,&params,&data
@@ -176,6 +182,99 @@ module "Gestión de dotación de insumos a empleados :dotacion"
         @list_query = ftext(@list_query)
     }
 
+    validarExcedente::&db,&params,&data
+    {
+        new args
+        {
+            @"iempleado": @@(data,"#ref_empleado")
+            @"iproducto": @@(data,"#producto")
+        }
+        args<"ipuesto"> : dbr.num(db,"select ref_puesto from rh_contrato_empleado where ref_empleado = @iempleado",args)
+
+        sql_obtener_limite = "SELECT * FROM rhgfcdi_limite WHERE ref_insumo = @iproducto AND ref_puesto = @ipuesto LIMIT 1"
+        ref limite = dbr.rec(db,sql_obtener_limite,args)
+        
+        args<"intervalo"> : @@(limite,"#intervalo")
+
+        sql_cantidad_insumo_otorgado = "
+        SELECT COUNT(mov.sys_pk)
+        FROM rhgfcdi_mov AS mov
+        WHERE mov.ref_empleado = @iempleado
+            AND mov.producto = @iproducto
+            #<conditions>
+        "
+
+        switch @@(limite,"#frecuencia")
+        {
+            case @frq_limit_dia
+            {
+                conditions = "AND DATE_ADD(mov.fecha, INTERVAL @intervalo DAY) >= DATE(NOW())"
+                break
+            }
+            case @frq_limit_semana_cal
+            {
+                conditions = "
+                AND WEEKOFYEAR(DATE_ADD(mov.fecha, INTERVAL @intervalo WEEK)) >= WEEKOFYEAR(NOW())
+                AND YEAR(mov.fecha) = YEAR(NOW())
+                "
+                break
+            }
+            case @frq_limit_mes_cal
+            {
+                conditions = "
+                AND MONTH(DATE_ADD(mov.fecha, INTERVAL @intervalo MONTH)) >= MONTH(NOW())
+                AND YEAR(mov.fecha) = YEAR(NOW())
+                "
+                break
+            }
+            case @frq_limit_anio_cal
+            {
+                conditions = "AND YEAR(DATE_ADD(mov.fecha, INTERVAL @intervalo YEAR)) >= YEAR(NOW())"
+                break
+            }
+        }
+
+        insumo_otorgado = dbr.num(db,ftext(sql_cantidad_insumo_otorgado),args)
+
+        data<"excedente"> : ((insumo_otorgado + @@(data,"#cantidad")) > @@(limite,"#cantidad"))
+        data<"precio"> : @@(limite,"#precio")
+
+        return data
+    }
+
+    generarSalida::&db,&data
+    {
+        new cardex
+        {
+            @"referencia": uuid()
+            @"fecha*": now()
+            @"icategoria": 6 // [0003] Otros egresos
+            @"descripcion": trim(@@(data,"$notas"))
+        }
+        ref mov = dbr.save(db,"cardex",cardex)
+
+        new dcardex
+        {
+            @"ialmacen": @@(data,"#ialmacen")
+            @"iproducto": @@(data,"#producto")
+            @"rcompra*": @null
+            @"fk_cardex_movimientos": @@(mov,"#sys_pk")
+            @"abonos": (@@(data,"#precio") * @@(data,"#cantidad"))
+            @"auditado": @false
+            @"cargos": 0
+            @"contabilizado": @false
+            @"cpromedio": @@(data,"#precio")
+            @"entradas": 0
+            @"resto": 0
+            @"salidas": @@(data,"#cantidad")
+            @"tipocambio": 1
+            @"valuado": @false
+        }
+        do dbr.save(db,"dcardex",dcardex)
+
+        return mov
+    }
+
     list::&db,&params
     {
         do dotacion.evaluateFilters(params)
@@ -212,15 +311,25 @@ module "Gestión de dotación de insumos a empleados :dotacion"
     create::&db,&params,&data
     {
         namespace "dotacion"
+        @use_transaction = @false
 
+        do validarExcedente(db,params,data)
         using data
         {
             @"sys_user": @@(@http_context,"$session/user/uid")
-            @"excedente": parse.bool(trim(@@(data,"$excedente")))
             @"usuario": lib.GetPkUsr(db, @@(@http_context,"$session/user/uid"))
         }
 
+        do dbr.begin(db)
+
+        ref mov = generarSalida(db,data)
+        mov_sys_pk = @@(mov,"#sys_pk")
+        data<"ref_cardex"> : mov_sys_pk
+
+        do erp.inventario.aplicar_mov(db,mov_sys_pk,@true)
         do entity.create(db,params,data)
+
+        do dbr.commit(db)
 
         exception
         {
@@ -241,32 +350,7 @@ module "Gestión de dotación de insumos a empleados :dotacion"
 
     update::&db,&params,&data
     {
-        namespace "dotacion"
-
-        using data
-        {
-            @"sys_lastuser": @@(@http_context,"$session/user/uid")
-            @"excedente": parse.bool(trim(@@(data,"$excedente")))
-            @"usuario": lib.GetPkUsr(db, @@(@http_context,"$session/user/uid"))
-        }
-
-        do entity.update(db,params,data)
-
-        exception
-        {
-            do errordet(@false)
-            if dbr.in_transaction(db) { do dbr.rollback(db) }
-
-            ref FormData = record.copy(data,"*")
-            code = last_error_code()
-            error = last_error()
-
-            do record.clear(data)
-            data<"form*"> : FormData
-
-            do prepareView(db,params,data)
-            do rise_error(code,error)
-        }
+        do rise_error(500,"Acción no implementada")
     }
 
     delete::&db,&params

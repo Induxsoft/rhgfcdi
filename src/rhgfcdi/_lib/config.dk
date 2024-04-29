@@ -10,9 +10,16 @@ module
     @curr_day = ndatetime.day(@curr_ndt)
 
 	//* ======================================== [ CONSTANTS ]
+	// rhgfcdi_limite_freq
+	@frq_limit_dia = 1
+	@frq_limit_semana_cal = 2
+	@frq_limit_mes_cal = 3
+	@frq_limit_anio_cal = 4
+
 	@default_max_rows = 250 // limite de registros para las vistas de lista
 
 	//* ======================================== [ _STATIC RESOURCES ]
+	@JS_MAIN = "/$/rhgfcdi/js/main.js"
 	@JS_DOTACION = "/$/rhgfcdi/js/dotacion.js"
 
 	//* ======================================== [ _PACKAGE ]
@@ -20,6 +27,7 @@ module
 	@URL_BUSCAR_PUESTO = "/!/rhgfcdi/limites/?_view=buscar-puesto&search=@search"
 	@URL_BUSCAR_EMPLEADO = "/!/rhgfcdi/dotacion/?_view=buscar-empleado&search=@search"
 	@URL_OBTENER_ALMACENES = "/!/rhgfcdi/dotacion/?_view=obtener-almacenes&iempleado=@iempleado"
+	@URL_VALIDAR_EXCEDENTE = "/!/rhgfcdi/dotacion/?_view=validar-excedente"
 
 	@CDI_ALMACENES = "/!/rhgfcdi/almacenes/"
 	@CDI_LIMITES = "/!/rhgfcdi/limites/"
