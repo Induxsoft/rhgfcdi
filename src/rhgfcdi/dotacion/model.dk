@@ -168,13 +168,13 @@ module "Gestión de dotación de insumos a empleados :dotacion"
 
         if trim(@@(params,"$fil_text")) != "" {
             conditions = conditions + "
-            AND (emp.codigo LIKE CONCAT('%',@search,'%')
-                OR emp.nombre LIKE CONCAT('%',@search,'%')
-                OR emp.apellido1 LIKE CONCAT('%',@search,'%')
-                OR emp.apellido2 LIKE CONCAT('%',@search,'%')
-                OR emp.rfc LIKE CONCAT('%',@search,'%')
-                OR emp.curp LIKE CONCAT('%',@search,'%')
-                OR emp.nss LIKE CONCAT('%',@search,'%')
+            AND (emp.codigo LIKE CONCAT('%',@fil_text,'%')
+                OR emp.nombre LIKE CONCAT('%',@fil_text,'%')
+                OR emp.apellido1 LIKE CONCAT('%',@fil_text,'%')
+                OR emp.apellido2 LIKE CONCAT('%',@fil_text,'%')
+                OR emp.rfc LIKE CONCAT('%',@fil_text,'%')
+                OR emp.curp LIKE CONCAT('%',@fil_text,'%')
+                OR emp.nss LIKE CONCAT('%',@fil_text,'%')
                 OR prod.descripcion LIKE CONCAT('%',@fil_text,'%')
             )"
         }
