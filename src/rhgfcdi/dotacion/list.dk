@@ -41,7 +41,7 @@ module "list.dk"
         @"title": "Gestión de dotación de insumos"
         @"buttons*": @null
         @"urlexit": "/"
-        @"main": ""
+        @"main": "HC31"
         @"actions*": itemactions
         @"reports*": itemreports
         @"jscurrentcontext": "getCurrentContext"

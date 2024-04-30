@@ -50,7 +50,7 @@ module "list.dk"
         @"title": "Limite de insumos por puesto"
         @"buttons*": @null
         @"urlexit": "/"
-        @"main": ""
+        @"main": "HC21,HC22,HC23"
         @"actions*": itemactions
         @"reports*": itemreports
         @"jscurrentcontext": "getCurrentContext"

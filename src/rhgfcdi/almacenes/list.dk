@@ -46,7 +46,7 @@ module "list.dk"
         @"title": "Almacenes autorizados"
         @"buttons*": @null
         @"urlexit": "/"
-        @"main": ""
+        @"main": "HC11,HC12,HC13"
         @"actions*": itemactions
         @"reports*": itemreports
         @"jscurrentcontext": "getCurrentContext"
