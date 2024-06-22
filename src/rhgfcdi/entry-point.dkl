@@ -28,6 +28,7 @@ module "Controller configs"
     //    //Si es la ruta indicada esto es @true pero no se modifica _entities_type
     // }
 
+	do crudl.load_config()
 	do crudl.loadRoutesJSON()
 
 	//No modifique a menos que sepa lo que está haciendo

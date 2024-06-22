@@ -25,9 +25,12 @@ module "Gestión de dotación de insumos a empleados :dotacion"
         prod.descripcion AS insumo,
         t1.unidad,
         t1.cantidad,
+        t1.excedente,
         IF(t1.excedente, 'Si', 'No') AS dexcedente,
         CONCAT('$',FORMAT(IFNULL(t1.precio,0),4)) AS precio,
-        IFNULL(t1.notas,'') AS notas
+        IFNULL(t1.notas,'') AS notas,
+        emp.sys_pk pkemp,
+        prod.sys_pk pkprod
     FROM #<@table_name> AS t1
         INNER JOIN rh_empleado_org AS emp ON t1.ref_empleado = emp.sys_pk
         INNER JOIN tuser AS usr ON t1.usuario = usr.sys_pk
@@ -165,7 +168,12 @@ module "Gestión de dotación de insumos a empleados :dotacion"
     evaluateFilters::&params
     {
         conditions = ""
-
+        if trim(@@(params,"$emp"))!=""{conditions=conditions + " and emp.sys_pk=@emp "}
+        if trim(@@(params,"$ins"))!=""{conditions=conditions + " and prod.sys_pk=@ins "}
+        if @@(params,"#sts")>0
+        {
+            conditions=conditions + " and if(ifnull(@sts,0)=1,ifnull(t1.excedente,0)=1,ifnull(t1.excedente,0)=0) "
+        }
         if trim(@@(params,"$fil_text")) != "" {
             conditions = conditions + "
             AND (emp.codigo LIKE CONCAT('%',@fil_text,'%')
@@ -279,13 +287,18 @@ module "Gestión de dotación de insumos a empleados :dotacion"
     {
         do dotacion.evaluateFilters(params)
 
+        params<"id">:@@(params,"#ins")
         new data
         {
             @"dotaciones*": entity.list(db,params)
             @"itemactions*": dbr.apps.itemactions(db,"DET074","action","",0)
             @"itemreports*": dbr.apps.itemactions(db,"DET074","report","",0)
+            
         }
+        if @@(params,"#emp")>0{data<"empleado*">:dbr.rec(db,"select * from rh_empleado_org e where e.sys_pk=@emp",params)}
+        if @@(params,"#ins")>0{data<"insumo*">:dotacion.buscarInsumo(db,params)}
 
+        
         return data
     }
 
