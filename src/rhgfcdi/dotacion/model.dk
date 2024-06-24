@@ -63,15 +63,23 @@ module "Gestión de dotación de insumos a empleados :dotacion"
     {
         sql_buscar_empleado = "
         SELECT
-            sys_pk,
-            codigo,
-            nombre,
-            IFNULL(apellido1,0) apellido1,
-            IFNULL(apellido2,0) apellido2,
+            e.sys_pk,
+            e.codigo,
+            e.nombre,
+            IFNULL(apellido1, 0) apellido1,
+            IFNULL(apellido2, 0) apellido2,
             rfc,
             curp,
-            IFNULL(nss,'') nss
-        FROM rh_empleado_org
+            IFNULL(nss, '') nss,
+            CONCAT_WS(' - ', pto.codigo, pto.descripcion) puesto,
+            pto.sys_pk pkpto,
+            c.referencia ref_contrato,
+            c.sys_pk pkcontrato,
+            CONCAT_WS(' - ', uni.codigo, uni.descripcion) unidad
+        FROM rh_empleado_org e
+        LEFT JOIN rh_contrato_empleado c ON c.ref_empleado=e.sys_pk
+        LEFT JOIN rh_puesto_org AS pto ON c.ref_puesto = pto.sys_pk
+        LEFT JOIN rh_unidad_org AS uni ON pto.ref_unidad_org = uni.sys_pk
         WHERE #<conditions>
         "
 
@@ -83,8 +91,8 @@ module "Gestión de dotación de insumos a empleados :dotacion"
         if trim(@@(params,"$search")) != ""
         {
             conditions = "
-            NOT IFNULL(sys_deleted,0)
-            AND (codigo LIKE CONCAT('%',@search,'%') 
+            NOT IFNULL(e.sys_deleted,0)
+            AND (e.codigo LIKE CONCAT('%',@search,'%') 
                 OR nombre LIKE CONCAT('%',@search,'%')
                 OR apellido1 LIKE CONCAT('%',@search,'%')
                 OR apellido2 LIKE CONCAT('%',@search,'%')

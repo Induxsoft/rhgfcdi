@@ -55,7 +55,7 @@ module "form.dk"
                     div(class="col-lg-6 col-md-6 col-sm-12")
                     {
                         label(class="form-label fw-bold" "for"="ik_puesto"){$"Empleado:"}
-                        "input-key"(name="ref_empleado" id="ik_empleado" "data-key"="sys_pk" "data-search"="codigo" "data-text"="nombre" "data-source"="#<@URL_BUSCAR_EMPLEADO>" "data-value"="#<to.json(dtempleado)>" columns="codigo,nombre,apellido1" colcaptions="Código,Nombre,Apellido" required="true"){$""}
+                        "input-key"(name="ref_empleado" id="ik_empleado" "data-key"="sys_pk" "data-search"="codigo" "data-text"="nombre" "data-source"="#<@URL_BUSCAR_EMPLEADO>" "data-value"="#<to.json(dtempleado)>" columns="codigo,nombre,apellido1,puesto,unidad,ref_contrato" colcaptions="Código,Nombre,Apellido,Puesto,Unidad,Contrato empleado" required="true"){$""}
                     }
                     div(class="col-lg-6 col-md-6 col-sm-12")
                     {
