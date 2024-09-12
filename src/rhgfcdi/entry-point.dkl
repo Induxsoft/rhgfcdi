@@ -13,6 +13,12 @@ module "Controller configs"
 
 	@base_path = "rhgfcdi"
 	@path_root = ""
+
+	if @@(@http_context,"$session/user/ids") == "" {
+		if file.exists("webshell/lost.dk") { include "webshell/lost.dk" }
+		else { @http_context<"response/headers/location"> : "/" }
+		return
+	}
 	
 	// Enmascaramiento de enrutamiento (Ejemplos)
 	// Definición de patrones de rutas con base en parámetros GET (request/get)
@@ -28,7 +34,6 @@ module "Controller configs"
     //    //Si es la ruta indicada esto es @true pero no se modifica _entities_type
     // }
 
-	do crudl.load_config()
 	do crudl.loadRoutesJSON()
 
 	//No modifique a menos que sepa lo que está haciendo
