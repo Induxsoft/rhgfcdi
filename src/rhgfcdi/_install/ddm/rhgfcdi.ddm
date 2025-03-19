@@ -71,7 +71,7 @@ model "rhgfcdi"
 		@"codigo" string(32) unique required
 		@"descripcion" string(150) required
 		@"superior" ref:"rh_unidad_org"
-		@"notas" string(4096)
+		@"notas" memo
 		@"link" string(1024)
 	}
     // Enumeración de niveles de escolaridad
@@ -114,7 +114,7 @@ model "rhgfcdi"
     entity "rh_categoria_empleado" : "TableModel"
     {
         @"nombre" string(50) unique required
-        @"notas" string(4096) 
+        @"notas" memo 
     }
     // Puestos de empleados
     entity "rh_puesto_org" : "TableModel"
@@ -122,15 +122,15 @@ model "rhgfcdi"
         @"codigo" string(32) unique required
         @"descripcion" string(150) required
         @"sat_riesgopuesto" string(5)
-        @"perfil" string(4096)
-        @"responsabilidades" string(4096)
-        @"funciones" string(4096)
-        @"beneficios" string(4096)
+        @"perfil" memo
+        @"responsabilidades" memo
+        @"funciones" memo
+        @"beneficios" memo
         @"salariomensualbruto" decimal(16,4)
         @"divisa" string(5)
         @"ref_jefe" ref:"rh_puesto_org"
         @"ref_unidad_org" ref:"rh_unidad_org"
-        @"notas" string(4096)
+        @"notas" memo
         @"escolaridad" ref:"rh_nvl_escolaridad" required
         @"plazas_previstas" int
         @"link" string(1024)
@@ -165,14 +165,14 @@ model "rhgfcdi"
         @"fechaestudiosocioe" date
         @"escolaridad" ref:"rh_nvl_escolaridad" required
         @"titulos" string(150)
-        @"competencias" string(4096)
+        @"competencias" memo
         @"estrellas" int
         @"cerebros" int
         @"focos" int
         @"tachas" int
-        @"notas" string(4096)
+        @"notas" memo
         @"totalmiembrosfam" int
-        @"obs_socio" string(4096)
+        @"obs_socio" memo
         @"ref_categoria" ref:"rh_categoria_empleado"
         @"nss" string(50)
     }
@@ -195,21 +195,21 @@ model "rhgfcdi"
         @"comision4" decimal(18,8)
         @"comision5" decimal(18,8)
         @"descripcion" string(50) unique required
-        @"notas" string(4096)
+        @"notas" memo
         @"visible" bool
-        @"uf_indicaciones" string(4096)
+        @"uf_indicaciones" memo
     }
     // Configuracion de impuesto por zona
     entity "cfgimpuesto" : "TableModel"
     {
-        @"i1compra" string(4096)
-        @"i1venta" string(4096)
-        @"i2compra" string(4096)
-        @"i2venta" string(4096)
-        @"i3compra" string(4096)
-        @"i3venta" string(4096)
-        @"i4compra" string(4096)
-        @"i4venta" string(4096)
+        @"i1compra" memo
+        @"i1venta" memo
+        @"i2compra" memo
+        @"i2venta" memo
+        @"i3compra" memo
+        @"i3venta" memo
+        @"i4compra" memo
+        @"i4venta" memo
         @"nombre" string(25) unique required
         @"uf_tipoi1" string(25)
         @"uf_tipoi2" string(25)
